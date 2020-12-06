@@ -1,0 +1,127 @@
+function ffile(row) {
+ var filename= row[6];
+ var filename1=row[7];
+
+  var folder = DriveApp.getFoldersByName("ME219 TA");
+    var folder2 = folder.next().getFoldersByName("exam5");
+    var folder4=folder2.next().getFoldersByName(row[5]);
+  if(!(filename=='x'))
+  {
+  var file = folder4.next().getFilesByName(filename);
+  
+    
+  var folder = DriveApp.getFoldersByName("ME219 TA");
+    var folder2 = folder.next().getFoldersByName("exam5");
+    var folder4=folder2.next().getFoldersByName(row[5]);
+  var filea=folder4.next().getFilesByName(filename1);
+ 
+    
+  Logger.log(filename);
+  Logger.log(row[7]);
+    if (!file.hasNext()) 
+    {
+      console.error("Could not open file "+filename);
+      return;
+    } 
+  
+    var emailAddress =row[2]; // First column
+    var message = row[3]+"\n"+row[4]+"\n"+"For endsem keep your file name as RollNO._endsem"; // Second column
+    var subject = 'ME219 Corrected Answer Script';
+    var ccmail=row[9];
+    var Rname="Nikhil";
+  
+    if (!filea.hasNext()) 
+    {
+    
+    var cvv=file.next();
+   
+    var siz=cvv.getSize();
+    var uril=cvv.getUrl();
+    Logger.log(uril);
+    
+    if(cvv.getMimeType()=="application/pdf") // application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    {
+      if(siz < 2e+7)
+      {
+      MailApp.sendEmail(emailAddress, subject, message,{cc:ccmail,noReply:true,
+                                                        attachments: [cvv.getAs(MimeType.PDF)]});
+     
+      }
+      else
+      {
+        message = row[3]+"\n"+row[4]+"\n"+"URL:"+"\n"+uril;
+        MailApp.sendEmail(emailAddress, subject, message,{cc:ccmail,noReply:true,
+                                                         });
+      }
+     }
+      
+    }
+    
+  
+    if (filea.hasNext())
+    {
+    var cvv=file.next();
+    var ff=filea.next();
+    var siz=cvv.getSize();
+    var uril=cvv.getUrl();
+    Logger.log(uril);
+    
+    if(cvv.getMimeType()=="application/pdf") // application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    {
+       if(siz < 2e+7)
+       {
+         MailApp.sendEmail(emailAddress, subject, message,{cc:ccmail,noReply:true,
+                                                        attachments: [cvv.getAs(MimeType.PDF)]});
+      if(ff.getMimeType()=="application/pdf")
+      {
+        MailApp.sendEmail(emailAddress, subject, message,{cc:ccmail,noReply:true,
+                                                        attachments: [ff.getAs(MimeType.PDF)]});
+                                                 
+      }
+      }
+      else
+      {
+       message = row[3]+"\n"+row[4]+"\n"+"URL:"+"\n"+uril;
+      MailApp.sendEmail(emailAddress, subject, message,{cc:ccmail});
+      }
+      
+    }
+    else if(cvv.getMimeType()=="application/vnd.openxmlformats-officedocument.wordprocessingml.document") // application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    {
+    if(siz < 2e+7)
+    {
+      MailApp.sendEmail(emailAddress, subject, message,{cc:ccmail,
+                                                     attachments:[cvv.getAs(MimeType.MICROSOFT_WORD)]});
+    }
+    else
+    {
+      message = row[1]+"\n"+row[2]+"\n"+"URL:"+"\n"+uril;
+      MailApp.sendEmail(emailAddress, subject, message,{cc:ccmail});
+    }
+}
+    }
+  }
+  }
+  
+
+
+function sendEmails() {
+  var EMAIL_SENT = 'EMAIL_SENT';
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var startRow =2; //2; // First row of data to process
+  var numRows = 25;//66; // Number of rows to process
+  // Fetch the range of cells A2:B3
+  var dataRange = sheet.getRange(startRow, 1, numRows, 11);
+  // Fetch values for each row in the Range.
+  var data = dataRange.getValues();
+  for (var i = 0; i < data.length; ++i) {
+    var row = data[i];
+    ffile(row);
+    var emailSent = row[10]; // Third column
+    if (emailSent !== EMAIL_SENT) { // Prevents sending duplicates
+      sheet.getRange(startRow + i, 11).setValue(EMAIL_SENT);
+      // Make sure the cell is updated right away in case the script is interrupted
+      SpreadsheetApp.flush();
+    }
+  }
+}
